@@ -134,3 +134,26 @@ We have a decrease on mean and medium values. It was more sensible on the mean b
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
+Let's add a new factor column called weekday containing two levels:
+
+```{r}
+data$weekd <- weekdays(as.Date(data$date))
+data[data$weekd == "Saturday",]$weekd <- "weekend"
+data[data$weekd == "Sunday",]$weekd <- "weekend"
+data[data$weekd != "weekend",]$weekd <- "weekday"
+data$weekd <- factor(data$weekd)
+```
+
+Let's check the time series for he 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis):
+
+```{r}
+dataForTimeSeries <- aggregate(steps~hour+weekd,data,mean,na.rm=T)
+dataForTimeSeries$hour <- as.POSIXct(dataForTimeSeries$hour, format="%H:%M")
+
+ggplot(dataForTimeSeries, aes(hour, steps)) +
+    geom_line(color="blue") +
+    xlab('Interval') +
+    ylab('Number of steps') +  
+    scale_x_datetime(labels=date_format(format='%H:%M')) +
+    facet_grid(weekd ~ .)
+```
