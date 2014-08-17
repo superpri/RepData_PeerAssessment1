@@ -15,6 +15,7 @@ Let's us load all packages needed for this assignment:
 
 ```{r}
 library(scales)
+library(grid)
 library(ggplot2)
 ```
 
@@ -57,16 +58,19 @@ But that aren't the numbers we are looking for. Since the data is taken every fi
 ```{r}
 dataForHist <- aggregate(steps ~ date, data, sum)
 summary(dataForHist)
-mean(dataForHist$steps, na.rm = TRUE)
-median(dataForHist$steps, na.rm = TRUE)
+naMean <- mean(dataForHist$steps, na.rm = TRUE)
+naMedian <- median(dataForHist$steps, na.rm = TRUE)
+naMean
+naMedian
 ```
 
 Here is the histogram of the total number of steps taken each day:
 
 ```{r}
-ggplot(dataForHist, aes(steps)) + 
-    geom_histogram(fill="gray", color="black") +  
-    theme_bw() 
+histogram1 <- ggplot(dataForHist, aes(steps)) + 
+    geom_histogram(fill="blue", color="black") +  
+    theme_bw()
+histogram1
 rm(dataForHist)
 ```
 
@@ -88,11 +92,45 @@ ggplot(dataForTimeSeries, aes(hour, steps)) +
     xlab('Time of day') +
     ylab('Mean number of steps') +  
     scale_x_datetime(labels=date_format(format='%H:%M'))
+rm(dataForTimeSeries)
 ```
 
 ## Imputing missing values
 
+Note that there are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data. We have 2304 missing values.
 
+```{r}
+sum(is.na(data))
+```
+
+Let's fill in these values and compute mean, median and histogram one more time.
+
+```{r}
+data[is.na(data)] <- median(data$steps, na.rm = TRUE)
+dataForHist <- aggregate(steps ~ date, data, sum)
+
+histogram2 <- ggplot(dataForHist, aes(steps)) + 
+    geom_histogram(fill="green", color="black") +  
+    theme_bw() 
+
+pushViewport(viewport(layout = grid.layout(1, 2)))
+print(histogram1, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(histogram2, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+```
+
+The difference between both histograms is that, when we fill up the missing values, there's a peak at the wee-hours (probably when the subject was sleeping), and the high peak in the middle decreases a bit.
+
+```{r}
+nonNaMean <- mean(dataForHist$steps, na.rm = TRUE)
+nonNaMedian <- median(dataForHist$steps, na.rm = TRUE)
+
+paste("Mean: before[",naMean,"] after[",nonNaMean,"]")
+paste("Median: before[",naMedian,"] after[",nonNaMedian,"]")
+
+rm(dataForHist)
+```
+
+We have a decrease on mean and medium values. It was more sensible on the mean because mean takes in consideration how many values are we using to compute it. Since the number os items had an increase, the mean was expected to be lower.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
